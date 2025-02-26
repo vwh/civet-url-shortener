@@ -51,7 +51,7 @@ enum Errors {
 Bun.serve({
     routes: {
         // Get info about a URL
-        "/info/:id": function (req) {
+        "/api/info/:id": function (req) {
             const data = db.getInfo(req.params.id);
             return data ? 
                 Response.json(data) 
@@ -59,7 +59,7 @@ Bun.serve({
         },
 
         // Create a new URL in the database
-        "/new":  {
+        "/api/new":  {
             POST: async function (req) {
                 const { url, title, description } = await req.json() as URLInfo;
                 const data = db.insert(url, title, description);
@@ -79,12 +79,12 @@ Bun.serve({
         },
 
         // Count the number of URLs
-        "/count": function() {
+        "/api/count": function() {
             return new Response(String(db.count()));
         },
 
         // Redirect to the URL if it exists
-        "/:id": function (req) {
+        "/u/:id": function (req) {
             const url = db.getURL(req.params.id);
             return url ? 
                 Response.redirect(url, 301) 

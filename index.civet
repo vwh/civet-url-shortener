@@ -49,14 +49,14 @@ enum Errors
 Bun.serve(
     routes:
         // Get info about a URL
-        "/info/:id": function (req)
+        "/api/info/:id": function (req)
             data := db.getInfo req.params.id;
             return data ? 
                 Response.json data 
                 : Response.json error: Errors.NotFound;
 
         // Create a new URL in the database
-        "/new": 
+        "/api/new": 
             POST: async function (req)
                 { url, title, description } := await req.json() as URLInfo;
                 data := db.insert url, title, description;
@@ -72,11 +72,11 @@ Bun.serve(
                         error: Errors.TitleRequired
 
         // Count the number of URLs
-        "/count": function()
+        "/api/count": function()
             return new Response String db.count();
 
         // Redirect to the URL if it exists
-        "/:id": function (req)
+        "/u/:id": function (req)
             url := db.getURL(req.params.id);
             return url ? 
                 Response.redirect url, 301 
