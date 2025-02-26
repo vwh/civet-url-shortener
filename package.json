@@ -1,0 +1,18 @@
+{
+  "name": "fp",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "civet < index.civet > index.ts",
+    "start": "bun index.ts",
+    "exec": "bun run build && bun run start"
+  },
+  "devDependencies": {
+    "@danielx/civet": "^0.9.7",
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}

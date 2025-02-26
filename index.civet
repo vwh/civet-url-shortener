@@ -1,0 +1,86 @@
+import { Database, SQLiteError } from "bun:sqlite";
+
+type URLInfo = url: string, title?: string, description?: string
+
+database := new Database "urls.db"
+    ||> &.exec `
+        CREATE TABLE IF NOT EXISTS url (
+            id TEXT PRIMARY KEY NOT NULL,
+            url TEXT NOT NULL,
+            title TEXT NOT NULL,
+            description,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        );
+    `
+
+db := {}
+    count()
+        database.query "SELECT COUNT(*) as count FROM url;"
+            |> (&.get() as count: number)
+            |> &.count
+
+    insert(url: string, title?: string, description?: string)
+        try database.prepare "INSERT INTO url (id, url, title, description) VALUES (?, ?, ?, ?)"
+            |> &.run
+                crypto.randomUUID(), 
+                url, 
+                title ?? null, 
+                description ?? null
+        catch e <? SQLiteError
+            if e.message.includes "url.title"
+                return Errors.TitleRequired;
+
+    getInfo(id: string)
+        database.prepare "SELECT url, title, description FROM url WHERE id = ?"
+            |> (&.get(id) as URLInfo)
+
+    getURL(id: string)
+        database.prepare("SELECT url FROM url WHERE id = ?")
+            |> (&.get(id) as url: string | null)
+            |> &.url
+
+enum Errors 
+    NotFound = "Not found"
+    TitleRequired = "Title is required"
+
+Bun.serve(
+    routes: 
+        "/info/:id": function (req)
+            data := db.getInfo req.params.id;
+            return data ? 
+                Response.json data 
+                : Response.json error: Errors.NotFound;
+        
+        // Redirect to the URL if it exists
+        "/:id": function (req)
+            url := db.getURL(req.params.id);
+            return url ? 
+                Response.redirect url, 301 
+                : Response.json error: Errors.NotFound;
+
+        // Create a new URL in the database
+        "/new": 
+            POST: async function (req)
+                { url, title, description } := await req.json() as URLInfo;
+                data := db.insert url, title, description;
+                return data != Errors.TitleRequired ?
+                    Response.json
+                        created: true, 
+                        url: url, 
+                        title: title, 
+                        description: description
+                    : Response.json
+                        created: false, 
+                        error: Errors.TitleRequired
+
+        // Count the number of URLs
+        "/count": function()
+            return new Response String db.count();
+              // Get info about a URL if it exists
+        
+    port: 3001
+    fetch: function (req) 
+        return new Response "Not Found", status: 404;
+);
+
+console.log "Server started on port 3001";
