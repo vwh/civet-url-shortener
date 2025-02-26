@@ -28,7 +28,8 @@ db := {}
                     url, 
                     title ?? null, 
                     description ?? null
-            return uuid
+            uuid
+        // Catch if the title is missing
         catch e <? SQLiteError
             if e.message.includes "url.title"
                 return Errors.TitleRequired;
@@ -48,34 +49,33 @@ enum Errors
 
 Bun.serve(
     routes:
-        // Get info about a URL
+        // Get info about the URL
         "/api/info/:id": function (req)
             data := db.getInfo req.params.id;
-            return data ? 
-                Response.json data 
-                : Response.json error: Errors.NotFound;
+            return Response.json data ? (data) : (error: Errors.NotFound);
 
-        // Create a new URL in the database
+        // Create a new URL record
         "/api/new": 
             POST: async function (req)
                 { url, title, description } := await req.json() as URLInfo;
                 data := db.insert url, title, description;
-                return data !== Errors.TitleRequired ?
-                    Response.json
-                        id: data,
-                        created: true, 
-                        url: url, 
-                        title: title, 
-                        description: description
-                    : Response.json
-                        created: false, 
-                        error: Errors.TitleRequired
+                return Response.json
+                    data !== Errors.TitleRequired ? (
+                            id: data,
+                            created: true, 
+                            url: url, 
+                            title: title, 
+                            description: description
+                        ) :(
+                            created: false, 
+                            error: Errors.TitleRequired
+                        )
 
         // Count the number of URLs
         "/api/count": function()
             return new Response String db.count();
 
-        // Redirect to the URL if it exists
+        // Redirect to the URL
         "/u/:id": function (req)
             url := db.getURL(req.params.id);
             return url ? 
