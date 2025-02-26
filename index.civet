@@ -8,7 +8,7 @@ database := new Database "urls.db"
             id TEXT PRIMARY KEY NOT NULL,
             url TEXT NOT NULL,
             title TEXT NOT NULL,
-            description,
+            description TEXT,
             created_at TEXT DEFAULT CURRENT_TIMESTAMP
         );
     `
